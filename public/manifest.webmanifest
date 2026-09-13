@@ -1,0 +1,17 @@
+{
+  "name": "Teacher Scheduler",
+  "short_name": "Scheduler",
+  "description": "Book tutoring sessions and track attendance across the month.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b6cf6",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
