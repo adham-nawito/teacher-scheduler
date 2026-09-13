@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PushToggle from "./PushToggle";
 
 const LINKS = [
   { href: "/calendar", label: "Calendar" },
@@ -48,6 +49,7 @@ export default function NavBar({ email }: { email: string | null }) {
         </div>
 
         <div className="flex items-center gap-3">
+          <PushToggle />
           <span className="hidden max-w-[160px] truncate text-xs text-gray-400 sm:block">
             {email ?? "Guest"}
           </span>

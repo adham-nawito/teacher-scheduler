@@ -17,7 +17,10 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        // Typed as `any[]` deliberately: this mirrors Supabase's own SSR
+        // example and we don't want to depend on guessing an exact type
+        // name from @supabase/ssr's internals.
+        setAll(cookiesToSet: any[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );

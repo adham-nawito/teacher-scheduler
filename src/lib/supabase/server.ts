@@ -16,7 +16,10 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        // Typed as `any[]` deliberately: this mirrors Supabase's own SSR
+        // example and we don't want to depend on guessing an exact type
+        // name from @supabase/ssr's internals.
+        setAll(cookiesToSet: any[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options),

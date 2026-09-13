@@ -17,6 +17,10 @@ calendar and track attendance. Built with **Next.js (App Router)** and
   student.
 - **Private by default** — Postgres row-level security means each teacher only
   ever sees their own students and sessions.
+- **Push notification reminders** — an optional push 10-15 minutes before each
+  session; see [`PUSH_NOTIFICATIONS.md`](PUSH_NOTIFICATIONS.md) for setup
+  (separate from the steps below, since it needs a Supabase Edge Function and
+  cron job, not just the web app).
 
 ## Tech
 
@@ -64,16 +68,21 @@ Open http://localhost:3000.
 ## Project structure
 
 ```
-supabase/schema.sql          Database schema + RLS policies
-src/middleware.ts            Refreshes the session and guards routes
-src/lib/supabase/            Browser / server / middleware Supabase clients
-src/lib/dates.ts             Calendar + recurrence date helpers
-src/lib/data.ts              All database reads/writes in one place
-src/app/login/               Google + guest login
-src/app/auth/callback/       OAuth code exchange
-src/app/(app)/calendar/      Month calendar + booking
-src/app/(app)/attendance/    Attendance matrix
-src/components/              CalendarView, BookingModal, AttendanceMatrix, NavBar
+supabase/schema.sql              Database schema + RLS policies
+supabase/push_notifications.sql  push_subscriptions table + reminder view (see PUSH_NOTIFICATIONS.md)
+supabase/pg_cron_schedule.sql    Schedules the reminder Edge Function every minute
+supabase/functions/              Deno Edge Function that sends the actual push
+src/middleware.ts                Refreshes the session and guards routes
+src/lib/supabase/                Browser / server / middleware Supabase clients
+src/lib/dates.ts                 Calendar + recurrence date helpers
+src/lib/data.ts                  All database reads/writes in one place
+src/lib/push.ts                  Browser-side push subscribe/unsubscribe helpers
+public/sw.js                     Service worker — receives push, opens the app
+src/app/login/                   Google + guest login
+src/app/auth/callback/           OAuth code exchange
+src/app/(app)/calendar/          Month calendar + booking
+src/app/(app)/attendance/        Attendance matrix
+src/components/                  CalendarView, BookingModal, AttendanceMatrix, NavBar, PushToggle
 ```
 
 ## Notes & possible next steps
