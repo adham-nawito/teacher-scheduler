@@ -17,9 +17,9 @@ select cron.schedule(
   '* * * * *', -- every minute
   $$
   select net.http_post(
-    url := 'https://<YOUR-PROJECT-REF>.supabase.co/functions/v1/send-session-reminders',
+    url := 'https://gydexrmibrufiqprlbqb.supabase.co/functions/v1/send-session-reminders',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer <YOUR-CRON-SECRET>',
+      'Authorization', 'Bearer d575ab948eb19f0f8d397e8bfca43b9735dc3878bafe098a',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
