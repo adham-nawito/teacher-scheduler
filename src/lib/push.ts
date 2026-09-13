@@ -52,7 +52,12 @@ export async function subscribeToPush(
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: base64UrlToUint8Array(publicKey),
+    // Cast needed because @types/node and the DOM lib disagree on
+    // Uint8Array's default generic parameter (ArrayBuffer vs the broader
+    // ArrayBufferLike). The array here is always backed by a plain
+    // ArrayBuffer at runtime (built via `new Uint8Array(length)`), so this
+    // is a type-level mismatch only, not a real behavior change.
+    applicationServerKey: base64UrlToUint8Array(publicKey) as BufferSource,
   });
 
   const json = subscription.toJSON();
