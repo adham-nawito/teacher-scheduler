@@ -23,11 +23,10 @@ from.
 npm install -g supabase
 supabase login
 cd teacher-scheduler
-supabase link --project-ref gydexrmibrufiqprlbqb
+supabase link --project-ref <project_ref>
 ```
 
-(Replace the project ref if yours differs — it's the same one from Settings
-→ General → Project ID.)
+(It's the same one from Settings → General → Project ID.)
 
 ## 3. Deploy the Edge Function
 
