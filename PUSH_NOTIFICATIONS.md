@@ -43,41 +43,71 @@ flag, every call would get a 401 before your code even runs.
 
 ## 4. Set the function's secrets
 
+Generate your own fresh values — never reuse an example value from a doc,
+even one you wrote yourself, since anything that's ever been pasted
+somewhere shared should be treated as already compromised:
+
+```bash
+# VAPID keypair (paste the two output lines into the command below)
+node -e "
+const crypto = require('crypto');
+const ecdh = crypto.createECDH('prime256v1');
+ecdh.generateKeys();
+let pub = ecdh.getPublicKey();
+let priv = ecdh.getPrivateKey();
+if (priv.length < 32) priv = Buffer.concat([Buffer.alloc(32 - priv.length), priv]);
+const b64url = (b) => b.toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+\$/,'');
+console.log('VAPID_PUBLIC_KEY=' + b64url(pub));
+console.log('VAPID_PRIVATE_KEY=' + b64url(priv));
+"
+
+# Cron secret
+node -e "console.log('CRON_SECRET=' + require('crypto').randomBytes(24).toString('hex'))"
+```
+
+Then:
+
 ```bash
 supabase secrets set \
-  VAPID_PUBLIC_KEY=BKLMTgU3osXEgtddg9YYurE2fIBBE2MjHd7W4tFwSWKX0j_hSCeLK9C4QSVb_iojrPqw0pgbtne3isR-Zk_wJ2E \
-  VAPID_PRIVATE_KEY=aG-5brbLY43wto0bEDjDpSPshDaCSE8IKXrWjV2bA1U \
+  VAPID_PUBLIC_KEY=<paste-from-above> \
+  VAPID_PRIVATE_KEY=<paste-from-above> \
   VAPID_SUBJECT="mailto:you@example.com" \
-  CRON_SECRET=d575ab948eb19f0f8d397e8bfca43b9735dc3878bafe098a
+  CRON_SECRET=<paste-from-above>
 ```
 
 Replace `mailto:you@example.com` with your real email — push services use
-this to contact you if your server is ever misbehaving. The VAPID keys and
-cron secret above were freshly generated for this project; you're welcome to
-keep them or generate your own (`node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"`
-for a new cron secret).
+this to contact you if your server is ever misbehaving.
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` don't need to be set — Supabase
 injects those into every Edge Function automatically.
+
+**This file used to contain real generated key values here as a convenience.
+They were removed after being committed to a public repo — treat any value
+that was ever in this file's git history as permanently compromised and
+already rotated, not as something safe to reuse.**
 
 ## 5. Add the public VAPID key to Vercel
 
 Vercel → your project → Settings → Environment Variables → add:
 
 ```
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=BKLMTgU3osXEgtddg9YYurE2fIBBE2MjHd7W4tFwSWKX0j_hSCeLK9C4QSVb_iojrPqw0pgbtne3isR-Zk_wJ2E
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<the VAPID_PUBLIC_KEY value from step 4>
 ```
 
-(Same public key as above — this half is safe to expose in the browser.
-Never put `VAPID_PRIVATE_KEY` here.) Redeploy after adding it, since env var
-changes don't apply to already-built deployments.
+(This half is safe to expose in the browser — it's public by design. Never
+put `VAPID_PRIVATE_KEY` here or anywhere client-side.) Redeploy after adding
+it, since env var changes don't apply to already-built deployments.
 
 ## 6. Schedule the cron job
 
-Open [`supabase/pg_cron_schedule.sql`](supabase/pg_cron_schedule.sql), replace
-the two placeholders (`<YOUR-PROJECT-REF>` and `<YOUR-CRON-SECRET>`) with your
-real project ref and the `CRON_SECRET` value from step 4, then run it in the
-SQL Editor.
+Open [`supabase/pg_cron_schedule.sql`](supabase/pg_cron_schedule.sql) and
+follow the two steps in it: first store your `CRON_SECRET` value in Supabase
+Vault (an encrypted secret store, so the real value never needs to be typed
+into a file that gets committed), then run the scheduling block with your
+project ref filled in. If you already had this cron job scheduled with the
+old plain-text approach, drop it first with
+`select cron.unschedule('send-session-reminders');` before re-running the
+new version — otherwise you'll end up with two competing jobs.
 
 ## 7. Test it
 
