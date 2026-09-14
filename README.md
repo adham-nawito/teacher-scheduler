@@ -15,6 +15,16 @@ calendar and track attendance. Built with **Next.js (App Router)** and
 - **Attendance matrix** — students down the side, session dates across the top,
   a checkbox in each cell to mark a session done, plus a done/booked total per
   student.
+- **Edit a session** — change the student, date, or time from the calendar's
+  day view. If it's part of a weekly series, choose whether the change applies
+  to just that one occurrence or to it and every future occurrence (the
+  weekday/date pattern itself can't be changed for a whole series — delete and
+  rebook if you need a different weekday).
+- **Duplicate recurring sessions to the next month** — one button re-books
+  every recurring student's same weekday/time as a fresh series in the month
+  you're viewing, with a review checklist first so you can leave out students
+  who shouldn't continue. One-off (non-recurring) sessions are never
+  duplicated.
 - **Private by default** — Postgres row-level security means each teacher only
   ever sees their own students and sessions.
 - **Push notification reminders** — an optional push 10-15 minutes before each
@@ -82,7 +92,8 @@ src/app/login/                   Google + guest login
 src/app/auth/callback/           OAuth code exchange
 src/app/(app)/calendar/          Month calendar + booking
 src/app/(app)/attendance/        Attendance matrix
-src/components/                  CalendarView, BookingModal, AttendanceMatrix, NavBar, PushToggle
+src/components/                  CalendarView, BookingModal, EditSessionModal, DuplicateMonthModal,
+                                  AttendanceMatrix, NavBar, PushToggle
 ```
 
 ## Notes & possible next steps
@@ -90,7 +101,10 @@ src/components/                  CalendarView, BookingModal, AttendanceMatrix, N
 - Recurrence is intentionally scoped to "weekly through the end of the current
   month", matching the way the calendar is browsed one month at a time.
 - Deleting a session removes just that occurrence. Bulk-deleting a whole
-  recurring series would be a natural follow-up (the `recurrence_group` column
-  is already stored for this).
+  recurring series isn't built (the `recurrence_group` column makes it
+  straightforward to add if it comes up).
+- Editing a whole series can only change the student and/or time, not the
+  weekday — moving a series to a different day of the week means deleting it
+  and rebooking.
 - To deploy, push to Vercel, set the two env vars, and update the Supabase Site
   URL / redirect allow-list to the production domain.

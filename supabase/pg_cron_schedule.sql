@@ -5,9 +5,8 @@
 --   3. its secrets (VAPID_*, CRON_SECRET) have been set.
 --
 -- Replace both placeholders below before running:
---   <YOUR-PROJECT-REF>  — e.g. gydexrmibrufiqprlbqb
---   <YOUR-CRON-SECRET>  — the exact same value you set with
---                          `supabase secrets set CRON_SECRET=...`
+--   <YOUR-PROJECT-REF>
+--   <YOUR-CRON-SECRET>
 
 create extension if not exists pg_cron;
 create extension if not exists pg_net;

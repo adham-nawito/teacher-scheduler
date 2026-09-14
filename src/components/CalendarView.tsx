@@ -14,9 +14,13 @@ import {
   deleteSession,
   fetchMonthSessions,
   findOrCreateStudent,
+  updateSeriesFromDate,
+  updateSession,
 } from "@/lib/data";
 import type { SessionWithStudent } from "@/lib/types";
 import BookingModal, { type BookingSubmit } from "./BookingModal";
+import EditSessionModal, { type EditSubmit } from "./EditSessionModal";
+import DuplicateMonthModal from "./DuplicateMonthModal";
 
 export default function CalendarView() {
   const supabase = useMemo(() => createClient(), []);
@@ -30,6 +34,9 @@ export default function CalendarView() {
   const [error, setError] = useState<string | null>(null);
   const [modalDate, setModalDate] = useState<Date | null>(null);
   const [selectedKey, setSelectedKey] = useState<string>(toDateKey(today));
+  const [editingSession, setEditingSession] = useState<SessionWithStudent | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const grid = useMemo(() => buildMonthGrid(year, month), [year, month]);
 
@@ -88,6 +95,42 @@ export default function CalendarView() {
     await load();
   }
 
+  async function handleEdit(values: EditSubmit) {
+    if (!userId || !editingSession) throw new Error("Not signed in.");
+    const student = await findOrCreateStudent(supabase, userId, values.studentName);
+
+    if (values.scope === "series" && editingSession.recurrence_group) {
+      const result = await updateSeriesFromDate(supabase, {
+        recurrenceGroup: editingSession.recurrence_group,
+        fromDate: editingSession.session_date,
+        studentId: student.id,
+        startTime: values.startTime,
+      });
+      setNotice(
+        result.skipped.length === 0
+          ? `Updated ${result.updated} session${result.updated === 1 ? "" : "s"} in the series.`
+          : `Updated ${result.updated} session${result.updated === 1 ? "" : "s"}. Skipped: ${result.skipped
+              .map((s) => `${s.sessionDate} (${s.reason})`)
+              .join(", ")}.`,
+      );
+    } else {
+      await updateSession(supabase, editingSession.id, {
+        studentId: student.id,
+        startTime: values.startTime,
+        sessionDate: values.sessionDate,
+      });
+    }
+
+    setEditingSession(null);
+    await load();
+  }
+
+  async function handleDuplicated(count: number) {
+    setDuplicating(false);
+    setNotice(`Booked ${count} session${count === 1 ? "" : "s"} for ${MONTH_LABELS[month]}.`);
+    await load();
+  }
+
   function changeMonth(delta: number) {
     const d = new Date(year, month + delta, 1);
     setYear(d.getFullYear());
@@ -96,15 +139,22 @@ export default function CalendarView() {
 
   const selectedSessions = byDate.get(selectedKey) ?? [];
   const todayKey = toDateKey(today);
+  const prevMonthDate = new Date(year, month - 1, 1);
 
   return (
     <div className="space-y-6">
       {/* Month header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold text-gray-900">
           {MONTH_LABELS[month]} {year}
         </h1>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => setDuplicating(true)}
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            Duplicate recurring sessions from {MONTH_LABELS[prevMonthDate.getMonth()]}
+          </button>
           <button
             onClick={() => changeMonth(-1)}
             aria-label="Previous month"
@@ -134,6 +184,15 @@ export default function CalendarView() {
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
+        </p>
+      )}
+
+      {notice && (
+        <p className="flex items-start justify-between gap-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+          <span>{notice}</span>
+          <button onClick={() => setNotice(null)} className="text-green-500 hover:text-green-700">
+            ×
+          </button>
         </p>
       )}
 
@@ -240,12 +299,20 @@ export default function CalendarView() {
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={() => handleDelete(s.id)}
-                  className="text-xs text-gray-400 hover:text-red-600"
-                >
-                  Remove
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setEditingSession(s)}
+                    className="text-xs text-gray-400 hover:text-brand-600"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(s.id)}
+                    className="text-xs text-gray-400 hover:text-red-600"
+                  >
+                    Remove
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -257,6 +324,24 @@ export default function CalendarView() {
           date={modalDate}
           onClose={() => setModalDate(null)}
           onSubmit={handleBook}
+        />
+      )}
+
+      {editingSession && (
+        <EditSessionModal
+          session={editingSession}
+          onClose={() => setEditingSession(null)}
+          onSubmit={handleEdit}
+        />
+      )}
+
+      {duplicating && userId && (
+        <DuplicateMonthModal
+          userId={userId}
+          targetYear={year}
+          targetMonth={month}
+          onClose={() => setDuplicating(false)}
+          onDone={handleDuplicated}
         />
       )}
     </div>

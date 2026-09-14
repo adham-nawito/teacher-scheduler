@@ -62,6 +62,22 @@ export function sameWeekdayThroughMonth(from: Date): Date[] {
   return dates;
 }
 
+/** The first date in the given month that falls on `weekday` (0 = Sunday). */
+export function firstWeekdayOfMonth(year: number, month: number, weekday: number): Date {
+  const first = startOfMonth(year, month);
+  const offset = (weekday - first.getDay() + 7) % 7;
+  return new Date(year, month, 1 + offset);
+}
+
+/**
+ * Every date in the given month on `weekday`, from the first occurrence
+ * through the end of the month. Used when re-applying a recurring series to
+ * a different month (e.g. "duplicate to next month").
+ */
+export function allWeekdaysInMonth(year: number, month: number, weekday: number): Date[] {
+  return sameWeekdayThroughMonth(firstWeekdayOfMonth(year, month, weekday));
+}
+
 /** Format 'HH:MM[:SS]' into a friendly label like '4:00 PM'. */
 export function formatTime(time: string): string {
   const [hStr, mStr] = time.split(":");
