@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * Refreshes the Supabase auth session on every request and guards routes.
- * Unauthenticated users are redirected to /login (except for /login and
- * the auth callback itself).
+ * Unauthenticated users are redirected to /login, except for the handful of
+ * routes that must work without a session (login, signup, forgot-password,
+ * the auth callback, and Paddle's webhook).
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -39,7 +40,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth");
+  const isPublic =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/auth") ||
+    // Paddle's webhook calls have no Supabase session cookie at all — this
+    // route verifies its own signature instead, so it must never be
+    // redirected to /login.
+    pathname.startsWith("/api/webhooks");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
@@ -47,7 +56,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname.startsWith("/login")) {
+  if (user && (pathname.startsWith("/login") || pathname.startsWith("/signup"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/calendar";
     return NextResponse.redirect(url);

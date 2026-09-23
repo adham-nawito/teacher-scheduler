@@ -2,43 +2,62 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
-  const router = useRouter();
+export default function ForgotPasswordPage() {
   const supabase = createClient();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    });
 
+    setLoading(false);
     if (error) {
       setError(error.message);
-      setLoading(false);
       return;
     }
+    // Always show the same "check your email" message whether or not the
+    // address exists — this deliberately doesn't reveal which emails have
+    // an account (a common security practice for reset flows).
+    setSent(true);
+  }
 
-    router.replace("/calendar");
-    router.refresh();
+  if (sent) {
+    return (
+      <main className="flex min-h-dvh items-center justify-center bg-brand-50 px-4">
+        <div className="w-full max-w-sm rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+          <h1 className="text-xl font-semibold text-gray-900">Check your email</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            If an account exists for <strong>{email}</strong>, a password
+            reset link is on its way.
+          </p>
+          <Link
+            href="/login"
+            className="mt-6 inline-block text-sm font-medium text-brand-600 hover:underline"
+          >
+            Back to sign in
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-brand-50 px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm ring-1 ring-black/5">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Teacher Scheduler
-          </h1>
+          <h1 className="text-xl font-semibold text-gray-900">Reset your password</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Book sessions and track attendance across the month.
+            We'll email you a link to set a new one.
           </p>
         </div>
 
@@ -50,37 +69,14 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
               autoComplete="email"
+              autoFocus
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-xs text-brand-600 hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <input
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
           </div>
@@ -90,14 +86,13 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-xl bg-brand-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
           >
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Sending…" : "Send reset link"}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">
-          New here?{" "}
-          <Link href="/signup" className="font-medium text-brand-600 hover:underline">
-            Create an account
+          <Link href="/login" className="font-medium text-brand-600 hover:underline">
+            Back to sign in
           </Link>
         </p>
       </div>

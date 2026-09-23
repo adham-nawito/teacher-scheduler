@@ -51,7 +51,7 @@ export default function NavBar({ email }: { email: string | null }) {
         <div className="flex items-center gap-3">
           <PushToggle />
           <span className="hidden max-w-[160px] truncate text-xs text-gray-400 sm:block">
-            {email ?? "Guest"}
+            {email}
           </span>
           <button
             onClick={signOut}

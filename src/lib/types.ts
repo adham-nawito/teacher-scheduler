@@ -20,3 +20,21 @@ export type Session = {
 export type SessionWithStudent = Session & {
   students: { name: string } | null;
 };
+
+export type SubscriptionStatus =
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "exempt";
+
+export type Subscription = {
+  user_id: string;
+  status: SubscriptionStatus;
+  trial_ends_at: string;
+  paddle_customer_id: string | null;
+  paddle_subscription_id: string | null;
+  current_period_end: string | null;
+  created_at: string;
+  updated_at: string;
+};
