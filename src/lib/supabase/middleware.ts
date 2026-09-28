@@ -4,8 +4,10 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * Refreshes the Supabase auth session on every request and guards routes.
  * Unauthenticated users are redirected to /login, except for the handful of
- * routes that must work without a session (login, signup, forgot-password,
- * the auth callback, and Paddle's webhook).
+ * routes that must work without a session (the "/" landing page, login,
+ * signup, forgot-password, the auth callback, and Paddle's webhook).
+ * Signed-in users get bounced off the landing page and the auth pages
+ * straight into /calendar — they've already seen the pitch.
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -41,6 +43,9 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isPublic =
+    // Exact match, not startsWith — every path "starts with /", so this
+    // must only cover the landing page itself, not the whole app.
+    pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password") ||
@@ -56,7 +61,12 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && (pathname.startsWith("/login") || pathname.startsWith("/signup"))) {
+  if (
+    user &&
+    (pathname === "/" ||
+      pathname.startsWith("/login") ||
+      pathname.startsWith("/signup"))
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/calendar";
     return NextResponse.redirect(url);

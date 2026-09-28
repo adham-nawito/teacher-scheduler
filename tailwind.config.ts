@@ -13,6 +13,14 @@ const config: Config = {
           700: "#2745a8",
         },
       },
+      fontFamily: {
+        // Only used on the marketing landing page (src/app/page.tsx) — the
+        // rest of the app keeps Tailwind's default sans stack untouched, so
+        // this can't affect any existing screen.
+        display: ["var(--font-fraunces)", "serif"],
+        body: ["var(--font-plex)", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["var(--font-plex-mono)", "ui-monospace", "monospace"],
+      },
     },
   },
   plugins: [],

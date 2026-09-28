@@ -6,6 +6,8 @@ out
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+.env
+package-lock.json
 
 # Supabase CLI local state (project ref, DB pooler host, org id — local
 # machine cache, never meant to be committed).

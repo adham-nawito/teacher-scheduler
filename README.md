@@ -132,6 +132,7 @@ src/lib/dates.ts                 Calendar + recurrence date helpers
 src/lib/data.ts                  All database reads/writes in one place
 src/lib/push.ts                  Browser-side push subscribe/unsubscribe helpers
 public/sw.js                     Service worker — receives push, opens the app
+src/app/page.tsx                 Public landing page (marketing, pricing, FAQ)
 src/app/login/                   Email/password sign in
 src/app/signup/                  Registration + email confirmation
 src/app/forgot-password/         Request a password reset email
