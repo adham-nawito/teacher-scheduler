@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 // Loaded globally (cheap — these only apply where a page opts in via
@@ -60,7 +61,10 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${plexSans.variable} ${plexMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
